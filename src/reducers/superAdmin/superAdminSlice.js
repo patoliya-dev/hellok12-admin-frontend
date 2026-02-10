@@ -5,19 +5,20 @@ import {
   isRejected,
 } from "@reduxjs/toolkit";
 import {
-  fetchSchoolTeachers,
+  fetchTeachers,
   inviteSchoolTeacher,
   approveRejectSchoolTeacher,
-  fetchSchoolStudents,
-  inviteSchoolStudent,
-} from "./schoolThunks";
+  fetchStudents,
+  inviteStudent,
+  fetchSchools,
+} from "./superAdminThunks";
 
 const allThunks = [
-  fetchSchoolTeachers,
+  fetchTeachers,
   inviteSchoolTeacher,
   approveRejectSchoolTeacher,
-  fetchSchoolStudents,
-  inviteSchoolStudent,
+  fetchStudents,
+  inviteStudent,
 ];
 
 const initialState = {
@@ -25,14 +26,17 @@ const initialState = {
   teachersSummary: { total: 0, active: 0, pending: 0, inactive: 0 },
   students: [],
   studentsPagination: { total: 0, page: 1, limit: 10, pages: 1 },
+  schools: [],
+  schoolsPagination: { total: 0, page: 1, limit: 10, pages: 1 },
 
   requests: {
-    fetchSchoolTeachers: { status: "idle", error: null },
+    fetchTeachers: { status: "idle", error: null },
     inviteSchoolTeacher: { status: "idle", error: null },
     approveRejectSchoolTeacher: { status: "idle", error: null },
 
-    fetchSchoolStudents: { status: "idle", error: null },
-    inviteSchoolStudent: { status: "idle", error: null },
+    fetchStudents: { status: "idle", error: null },
+    inviteStudent: { status: "idle", error: null },
+    fetchSchools: { status: "idle", error: null },
   },
 };
 
@@ -48,7 +52,7 @@ const schoolSlice = createSlice({
   },
   extraReducers: (builder) => {
     // Teachers
-    builder.addCase(fetchSchoolTeachers.fulfilled, (state, action) => {
+    builder.addCase(fetchTeachers.fulfilled, (state, action) => {
       const payload = action.payload || {};
       state.teachers = payload?.teachers || payload?.data?.teachers || [];
       state.teachersSummary =
@@ -56,12 +60,19 @@ const schoolSlice = createSlice({
     });
 
     // Students
-    builder.addCase(fetchSchoolStudents.fulfilled, (state, action) => {
+    builder.addCase(fetchStudents.fulfilled, (state, action) => {
       const payload = action.payload || {};
       // expected: { success, data: { students, pagination } } OR flattened
       const data = payload?.data || payload;
       state.students = data?.students || [];
       state.studentsPagination = data?.pagination || state.studentsPagination;
+    });
+
+    builder.addCase(fetchSchools.fulfilled, (state, action) => {
+      const payload = action.payload || {};
+      const data = payload?.data ? payload.data : payload;
+      state.schools = data?.schools || [];
+      state.schoolsPagination = data?.pagination || state.schoolsPagination;
     });
 
     // Generic request matchers
@@ -98,14 +109,17 @@ const schoolSlice = createSlice({
 export const { clearSchoolErrors } = schoolSlice.actions;
 
 // Selectors
-export const selectSchoolTeachers = (s) => s.school?.teachers || [];
-export const selectSchoolTeachersSummary = (s) =>
-  s.school?.teachersSummary || {};
-export const selectSchoolStudents = (s) => s.school?.students || [];
-export const selectSchoolStudentsPagination = (s) =>
+export const selectTeachers = (s) => s.school?.teachers || [];
+export const selectTeachersSummary = (s) => s.school?.teachersSummary || {};
+export const selectStudents = (s) => s.school?.students || [];
+export const selectStudentsPagination = (s) =>
   s.school?.studentsPagination || {};
 
-export const selectSchoolReq = (key) => (s) =>
+export const selectReq = (key) => (s) =>
   s.school?.requests?.[key] || { status: "idle", error: null };
+
+export const selectSchools = (s) => s.school?.schools || [];
+export const selectSchoolsReq = (s) =>
+  s.school?.requests?.fetchSchools || { status: "idle", error: null };
 
 export default schoolSlice.reducer;

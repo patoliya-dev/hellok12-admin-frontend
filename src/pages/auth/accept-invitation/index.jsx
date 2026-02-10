@@ -11,11 +11,11 @@ import { errorToast, successToast } from "../../../utils/utils";
 import {
   validateInvitation,
   acceptInvitation,
-} from "../../../reducers/invitations/invitationThunks";
+} from "../../../reducers/invitations/invitationsThunks";
 import {
   selectInvite,
   selectInvitationReq,
-} from "../../../reducers/invitations/invitationSlice";
+} from "../../../reducers/invitations/invitationsSlice";
 import { setAuthFromExternal } from "../../../reducers/auth/authSlice";
 
 const AcceptInvitationPage = () => {

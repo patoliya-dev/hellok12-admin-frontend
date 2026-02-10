@@ -13,24 +13,24 @@ import Loader from "components/ui/Loader";
 import { successToast, errorToast } from "../../../utils/utils";
 
 import {
-  fetchSchoolTeachers,
+  fetchTeachers,
   approveRejectSchoolTeacher,
-} from "../../../reducers/school/schoolThunks";
+} from "../../../reducers/superAdmin/superAdminThunks";
 import {
-  selectSchoolTeachers,
-  selectSchoolTeachersSummary,
-  selectSchoolReq,
-} from "../../../reducers/school/schoolSlice";
+  selectTeachers,
+  selectTeachersSummary,
+  selectReq,
+} from "../../../reducers/superAdmin/superAdminSlice";
 import InvitationTable from "../components/InvitationTable";
 import {
-  cancelSchoolInvitation,
-  fetchSchoolInvitations,
-} from "reducers/schoolInvitations/schoolInvitationsThunks";
+  cancelInvitation,
+  fetchInvitations,
+} from "reducers/invitations/invitationsThunks";
 import {
   selectInvitations,
   selectInvitationsLoading,
   selectInvitationsPagination,
-} from "reducers/schoolInvitations/schoolInvitationsSlice";
+} from "reducers/invitations/invitationsSlice";
 import { State } from "country-state-city";
 
 import SearchBar from "../../../components/ui/SearchBar";
@@ -51,9 +51,9 @@ const getFullLocationName = (location) => {
 const ManageTeachers = () => {
   const dispatch = useDispatch();
 
-  const teachers = useSelector(selectSchoolTeachers);
-  const summary = useSelector(selectSchoolTeachersSummary);
-  const fetchReq = useSelector(selectSchoolReq("fetchSchoolTeachers"));
+  const teachers = useSelector(selectTeachers);
+  const summary = useSelector(selectTeachersSummary);
+  const fetchReq = useSelector(selectReq("fetchTeachers"));
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
@@ -87,9 +87,9 @@ const ManageTeachers = () => {
     selectInvitationsPagination(s, "teacher", invSearch, invPage, invPageSize),
   );
 
-  const fetchInvitations = useCallback(() => {
+  const callInvitations = useCallback(() => {
     return dispatch(
-      fetchSchoolInvitations({
+      fetchInvitations({
         role: "teacher",
         search: invSearch,
         page: invPage,
@@ -99,14 +99,14 @@ const ManageTeachers = () => {
   }, [dispatch, invSearch, invPage]);
 
   useEffect(() => {
-    dispatch(fetchSchoolTeachers());
+    dispatch(fetchTeachers());
   }, [dispatch]);
 
   // Only fetch invitations when invitations tab active
   useEffect(() => {
     if (activeTab !== "invitations") return;
-    fetchInvitations();
-  }, [activeTab, fetchInvitations]);
+    callInvitations();
+  }, [activeTab, callInvitations]);
 
   // When invitation search changes on invitations tab: reset page to 1
   useEffect(() => {
@@ -135,7 +135,7 @@ const ManageTeachers = () => {
     async (inv) => {
       try {
         await dispatch(
-          cancelSchoolInvitation({
+          cancelInvitation({
             invitationId: inv._id,
             role: "teacher",
             search: invSearch,
@@ -145,13 +145,13 @@ const ManageTeachers = () => {
         ).unwrap();
 
         // refetch current view for correct totals
-        if (activeTab === "invitations") await fetchInvitations();
+        if (activeTab === "invitations") await callInvitations();
         successToast("Invitation cancelled");
       } catch (e) {
         errorToast(e || "Failed to cancel invitation");
       }
     },
-    [dispatch, invSearch, invPage, fetchInvitations, activeTab],
+    [dispatch, invSearch, invPage, callInvitations, activeTab],
   );
 
   const handleFilterChange = (field, value) => {
@@ -231,7 +231,7 @@ const ManageTeachers = () => {
         approveRejectSchoolTeacher({ teacherId, action: apiAction }),
       ).unwrap();
       successToast("Teacher status updated successfully!");
-      dispatch(fetchSchoolTeachers());
+      dispatch(fetchTeachers());
     } catch (e) {
       errorToast(e?.message || e?.error || "Failed to update teacher status");
     }
@@ -406,7 +406,7 @@ const ManageTeachers = () => {
         onClose={() => setShowInviteModal((v) => !v)}
         onSuccess={() => {
           setShowSuccessModal(true);
-          dispatch(fetchSchoolTeachers());
+          dispatch(fetchTeachers());
         }}
       />
 

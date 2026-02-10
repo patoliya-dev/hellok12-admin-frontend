@@ -5,68 +5,12 @@ import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
 import LessonDetailsModal from "./LessonDetailsModal";
 import { TAG_CONFIG } from "../data";
-// import { schoolService } from "../../../../services/school/school.service";
 import Loader from "../../../../components/ui/Loader";
 import {
   getUserTimezone,
   formatTimeToTZ,
   formatDateToTZ,
 } from "../../../../utils/timezone";
-
-// ---- helpers ----
-// const toDate = (v) => {
-//   if (!v) return null;
-
-//   // If backend returns Date-like strings, keep them as-is.
-//   // DO NOT remove 'Z' and DO NOT "manually" shift timezone.
-//   const d = v instanceof Date ? v : new Date(v);
-//   return Number.isNaN(d.getTime()) ? null : d;
-// };
-
-// const computeStatus = ({ start, end, rawStatus }) => {
-//   const s = String(rawStatus || "").toLowerCase();
-
-//   const startDt = toDate(start);
-//   const endDt = toDate(end);
-
-//   const now = Date.now();
-//   const startMs = startDt?.getTime();
-//   const endMs = endDt?.getTime();
-
-//   if (startMs && endMs) {
-//     if (now >= endMs) return "completed";
-//     if (now >= startMs && now < endMs) return "in-progress";
-
-//     const minutesUntil = Math.floor((startMs - now) / (1000 * 60));
-//     if (minutesUntil > 0 && minutesUntil <= 15) return "starting-soon";
-//     return "scheduled";
-//   }
-
-//   if (s.includes("cancel")) return "cancelled";
-//   if (s.includes("complete")) return "completed";
-//   if (s.includes("progress")) return "in-progress";
-//   if (s.includes("soon")) return "starting-soon";
-//   return s || "scheduled";
-// };
-
-// const formatAddressOneLine = (address) => {
-//   if (!address) return "";
-//   if (typeof address === "string") return address;
-
-//   const parts = [
-//     address.line1,
-//     address.line2,
-//     address.area,
-//     address.city,
-//     address.state,
-//     address.postalCode,
-//     address.country,
-//   ]
-//     .map((x) => String(x || "").trim())
-//     .filter(Boolean);
-
-//   return parts.join(", ");
-// };
 
 const getLessonTags = (tag) => {
   const badge = TAG_CONFIG[tag];

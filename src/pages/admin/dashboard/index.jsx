@@ -4,7 +4,7 @@ import Card from "./components/Card";
 import UpcomingLessonCard from "./components/UpcomingLessonCard";
 import QuickAction from "./components/QuickAction";
 import PageHeader from "../../../components/ui/PageHeader";
-import InviteTeacherModal from "../manage-teachers/components/InviteTeacherModal";
+import InviteTeacherModal from "../teachers/components/InviteTeacherModal";
 // import { useNavigate } from "react-router-dom";
 import Loader from "../../../components/ui/Loader";
 import { errorToast } from "../../../utils/utils";
