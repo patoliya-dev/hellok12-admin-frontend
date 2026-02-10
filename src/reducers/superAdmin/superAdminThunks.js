@@ -51,6 +51,17 @@ export const fetchStudents = createAsyncThunk(
   },
 );
 
+export const fetchParents = createAsyncThunk(
+  "superAdmin/fetchParents",
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      return await superAdminService.getParents(params);
+    } catch (e) {
+      return rejectWithValue(e);
+    }
+  },
+);
+
 export const inviteStudent = createAsyncThunk(
   "school/inviteStudent",
   async ({ email, message }, { rejectWithValue }) => {
@@ -62,11 +73,33 @@ export const inviteStudent = createAsyncThunk(
   },
 );
 
+export const inviteParent = createAsyncThunk(
+  "school/inviteParent",
+  async ({ email, message }, { rejectWithValue }) => {
+    try {
+      return await invitationService.inviteParent({ email, message });
+    } catch (e) {
+      return rejectWithValue(e);
+    }
+  },
+);
+
 export const fetchSchools = createAsyncThunk(
-  "superAdmin/fetchSchools",
+  "school/fetchSchools",
   async (params = {}, { rejectWithValue }) => {
     try {
       return await superAdminService.getSchools(params);
+    } catch (e) {
+      return rejectWithValue(e);
+    }
+  },
+);
+
+export const updateUser = createAsyncThunk(
+  "school/updateUser",
+  async ({ userId, payload }, { rejectWithValue }) => {
+    try {
+      return await superAdminService.updateUser(userId, payload);
     } catch (e) {
       return rejectWithValue(e);
     }
