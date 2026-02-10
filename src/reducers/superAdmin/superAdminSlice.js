@@ -11,6 +11,7 @@ import {
   fetchStudents,
   inviteStudent,
   fetchSchools,
+  fetchParents,
 } from "./superAdminThunks";
 
 const allThunks = [
@@ -28,6 +29,8 @@ const initialState = {
   studentsPagination: { total: 0, page: 1, limit: 10, pages: 1 },
   schools: [],
   schoolsPagination: { total: 0, page: 1, limit: 10, pages: 1 },
+  parents: [],
+  parentsPagination: { total: 0, page: 1, limit: 10, pages: 1 },
 
   requests: {
     fetchTeachers: { status: "idle", error: null },
@@ -37,6 +40,9 @@ const initialState = {
     fetchStudents: { status: "idle", error: null },
     inviteStudent: { status: "idle", error: null },
     fetchSchools: { status: "idle", error: null },
+    fetchParents: { status: "idle", error: null },
+
+    updateUser: { status: "idle", error: null },
   },
 };
 
@@ -66,6 +72,13 @@ const schoolSlice = createSlice({
       const data = payload?.data || payload;
       state.students = data?.students || [];
       state.studentsPagination = data?.pagination || state.studentsPagination;
+    });
+
+    builder.addCase(fetchParents.fulfilled, (state, action) => {
+      const payload = action.payload || {};
+      const data = payload?.data || payload;
+      state.parents = data?.parents || [];
+      state.parentsPagination = data?.pagination || state.parentsPagination;
     });
 
     builder.addCase(fetchSchools.fulfilled, (state, action) => {
@@ -114,6 +127,9 @@ export const selectTeachersSummary = (s) => s.school?.teachersSummary || {};
 export const selectStudents = (s) => s.school?.students || [];
 export const selectStudentsPagination = (s) =>
   s.school?.studentsPagination || {};
+
+export const selectParents = (s) => s.school?.parents || [];
+export const selectParentsPagination = (s) => s.school?.parentsPagination || {};
 
 export const selectReq = (key) => (s) =>
   s.school?.requests?.[key] || { status: "idle", error: null };
