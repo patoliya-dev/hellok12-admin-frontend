@@ -23,6 +23,11 @@ export const superAdminService = {
     return data?.data || data;
   },
 
+  getTeachers: async (params) => {
+    const { data } = await api.get("/admin/teachers", { params });
+    return data?.data || data;
+  },
+
   updateUser: async (userId, payload) => {
     try {
       const { data } = await api.patch(`/admin/users/${userId}`, payload);

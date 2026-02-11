@@ -93,7 +93,6 @@ const slice = createSlice({
       .addCase(fetchInvitations.fulfilled, (state, action) => {
         const { role, search, page, limit } = action.payload || {};
         const k = keyOf(role, search, page, limit);
-        console.log("action.payload", action.payload);
 
         const invitations = (action.payload?.invitations || []).map((inv) => ({
           ...inv,
@@ -178,7 +177,6 @@ export const selectInvitations = (
   limit = 10,
 ) => {
   const k = keyOf(role, search, page, limit);
-  console.log("state.invitations", state.invitations);
 
   return state.invitations?.byKey?.[k] || [];
 };

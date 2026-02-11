@@ -48,8 +48,6 @@ const InvitationTable = ({
   showRole = true,
   onPageChange,
 }) => {
-  console.log("invitations", invitations);
-
   const rows = useMemo(() => invitations || [], [invitations]);
 
   // Map API pagination -> common Pagination props

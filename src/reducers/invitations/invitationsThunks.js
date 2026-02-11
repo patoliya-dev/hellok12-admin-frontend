@@ -3,13 +3,17 @@ import { invitationService } from "../../services/invitations/invitation.service
 
 export const fetchInvitations = createAsyncThunk(
   "invitations/fetch",
-  async ({ role, search = "", page = 1, limit = 10 }, { rejectWithValue }) => {
+  async (
+    { role, search = "", page = 1, limit = 10, teacherType = "" },
+    { rejectWithValue },
+  ) => {
     try {
       const res = await invitationService.getInvitations({
         role,
         search,
         page,
         limit,
+        teacherType,
       });
       // res should be: { invitations, pagination }
       return { role, search, page, limit, ...res };

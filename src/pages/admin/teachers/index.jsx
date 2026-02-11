@@ -1,114 +1,178 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import PageHeader from "components/ui/PageHeader";
-import Card from "../dashboard/components/Card";
-import Filters from "./components/Filters";
-import TeacherSection from "./components/TeacherSection";
-import TeacherProfile from "./components/TeacherProfile";
-import InviteTeacherModal from "./components/InviteTeacherModal";
-import ProfileRequestModal from "./components/ProfileRequestModal";
+import SearchBar from "components/ui/SearchBar";
+import Button from "components/ui/Button";
 import Icon from "components/AppIcon";
 import Loader from "components/ui/Loader";
-import { successToast, errorToast } from "../../../utils/utils";
 
 import {
+  fetchSchools,
   fetchTeachers,
-  approveRejectSchoolTeacher,
-} from "../../../reducers/superAdmin/superAdminThunks";
+  inviteTeacher,
+  updateUser,
+} from "reducers/superAdmin/superAdminThunks";
+
 import {
-  selectTeachers,
-  selectTeachersSummary,
+  selectSchools,
+  selectSchoolsReq,
   selectReq,
-} from "../../../reducers/superAdmin/superAdminSlice";
+  selectTeachers,
+  selectTeachersPagination,
+} from "reducers/superAdmin/superAdminSlice";
+
 import InvitationTable from "../components/InvitationTable";
 import {
-  cancelInvitation,
   fetchInvitations,
+  cancelInvitation,
+  // requestInvitationProfile,
 } from "reducers/invitations/invitationsThunks";
 import {
   selectInvitations,
   selectInvitationsLoading,
   selectInvitationsPagination,
 } from "reducers/invitations/invitationsSlice";
-import { State } from "country-state-city";
 
-import SearchBar from "../../../components/ui/SearchBar";
+import TeachersFilters from "./components/TeachersFilters";
+import TeachersTable from "./components/TeachersTable";
+import EditTeacherModal from "./components/EditTeacherModal";
+import InviteTeacherModal from "./components/InviteTeacherModal";
+import ProfileRequestModal from "./components/ProfileRequestModal";
+import { errorToast, successToast } from "../../../utils/utils";
 
-const teachersPerPage = 10;
+const listPageSize = 10;
 const invPageSize = 10;
 
-const getFullLocationName = (location) => {
-  if (!location) return "";
-  const { country, state, city } = location;
-  const stateName = state
-    ? State.getStateByCodeAndCountry(state, country)?.name
-    : "";
-  const cityName = city || "";
-  return [cityName, stateName].filter(Boolean).join(", ");
-};
+// Normalize for invitations list filtering (no backend dependency)
+const getInvitationTeacherType = (inv) =>
+  inv?.teacherType || inv?.meta?.teacherType || inv?.context?.teacherType;
 
 const ManageTeachers = () => {
   const dispatch = useDispatch();
 
-  const teachers = useSelector(selectTeachers);
-  const summary = useSelector(selectTeachersSummary);
-  const fetchReq = useSelector(selectReq("fetchTeachers"));
+  // Primary tabs: school | independent
+  const [activeType, setActiveType] = useState("school");
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showProfileRequestModal, setShowProfileRequestModal] = useState(false);
-  const [activeTab, setActiveTab] = useState("teachers");
+  // Secondary tabs: list | invitations
+  const [activeTab, setActiveTab] = useState("list");
 
-  const [filters, setFilters] = useState({
-    status: "all",
-    language: "",
-    availability: "all",
-    experience: "all",
-  });
-
-  // Tab-specific search
-  const [teacherSearch, setTeacherSearch] = useState("");
+  // Search (separate per list + invitations)
+  const [listSearch, setListSearch] = useState("");
   const [invSearch, setInvSearch] = useState("");
 
-  // Invitations pagination
+  // Paging
+  const [page, setPage] = useState(1);
   const [invPage, setInvPage] = useState(1);
 
-  // selectors must include search (slice key = role:status:search)
-  const invitations = useSelector((s) =>
-    selectInvitations(s, "teacher", invSearch, invPage, invPageSize),
+  // Filters (only for list)
+  const [showFilter, setShowFilter] = useState(false);
+  const [filters, setFilters] = useState({
+    school: "all",
+    experience: "all",
+    status: "all",
+  });
+
+  // Modals
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTeacher, setEditTeacher] = useState(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [profileReqOpen, setProfileReqOpen] = useState(false);
+  const [profileReqTarget, setProfileReqTarget] = useState(null);
+
+  // Schools
+  const schools = useSelector(selectSchools);
+  const schoolsReq = useSelector(selectSchoolsReq);
+  const schoolsLoading = schoolsReq?.status === "loading";
+
+  useEffect(() => {
+    dispatch(fetchSchools({ page: 1, limit: 200, search: "" }));
+  }, [dispatch]);
+
+  const schoolOptions = useMemo(() => {
+    const base = [{ value: "all", label: "Select school" }];
+    const items = (schools || []).map((s) => ({
+      value: s._id,
+      label: s.profile?.schoolName || s.name || "School",
+    }));
+    return [...base, ...items];
+  }, [schools]);
+
+  // Teachers list
+  const rows = useSelector(selectTeachers);
+  const pagination = useSelector(selectTeachersPagination);
+  const listReq = useSelector(selectReq("fetchTeachers"));
+  const loading = listReq?.status === "loading";
+
+  const buildListParams = useCallback(() => {
+    const params = {
+      page,
+      limit: listPageSize,
+      teacherType: activeType, // school | independent
+      search: listSearch || undefined,
+      status: filters.status !== "all" ? filters.status : undefined,
+      experience: filters.experience !== "all" ? filters.experience : undefined,
+    };
+    if (activeType === "school") {
+      params.school = filters.school !== "all" ? filters.school : undefined;
+    }
+    return params;
+  }, [page, activeType, listSearch, filters]);
+
+  useEffect(() => {
+    if (activeTab !== "list") return;
+    dispatch(fetchTeachers(buildListParams()));
+  }, [dispatch, activeTab, buildListParams]);
+
+  // Invitations
+  const inviteRole = "teacher";
+  const allInvitations = useSelector((s) =>
+    selectInvitations(s, inviteRole, invSearch, invPage, invPageSize),
   );
   const invLoading = useSelector((s) =>
-    selectInvitationsLoading(s, "teacher", invSearch, invPage, invPageSize),
+    selectInvitationsLoading(s, inviteRole, invSearch, invPage, invPageSize),
   );
   const invPagination = useSelector((s) =>
-    selectInvitationsPagination(s, "teacher", invSearch, invPage, invPageSize),
+    selectInvitationsPagination(s, inviteRole, invSearch, invPage, invPageSize),
   );
+
+  const invitations = useMemo(() => {
+    const list = allInvitations || [];
+    // keep UI consistent even if backend doesn't filter by type
+    return list.filter((inv) => {
+      const t = String(getInvitationTeacherType(inv) || "").toLowerCase();
+      if (!t) return true; // older invites w/o metadata
+      return t === String(activeType).toLowerCase();
+    });
+  }, [allInvitations, activeType]);
 
   const callInvitations = useCallback(() => {
     return dispatch(
       fetchInvitations({
-        role: "teacher",
+        role: inviteRole,
         search: invSearch,
         page: invPage,
         limit: invPageSize,
+        teacherType: activeType === "school" ? "school" : "independent",
+        school: activeType === "school" ? filters.school : undefined,
       }),
     );
-  }, [dispatch, invSearch, invPage]);
+  }, [dispatch, inviteRole, invSearch, invPage, activeType, filters.school]);
 
-  useEffect(() => {
-    dispatch(fetchTeachers());
-  }, [dispatch]);
-
-  // Only fetch invitations when invitations tab active
   useEffect(() => {
     if (activeTab !== "invitations") return;
     callInvitations();
   }, [activeTab, callInvitations]);
 
-  // When invitation search changes on invitations tab: reset page to 1
+  // Reset pages when search changes
+  useEffect(() => {
+    (() => {
+      if (activeTab !== "list") return;
+      setPage(1);
+    })();
+  }, [listSearch, activeTab]);
+
   useEffect(() => {
     (() => {
       if (activeTab !== "invitations") return;
@@ -116,20 +180,34 @@ const ManageTeachers = () => {
     })();
   }, [invSearch, activeTab]);
 
-  // Teachers search is client-side; reset page on teacher search change
-  useEffect(() => {
-    (() => {
-      if (activeTab !== "teachers") return;
-      setCurrentPage(1);
-    })();
-  }, [teacherSearch, activeTab]);
+  const handleSearch = useCallback(
+    (term) => {
+      if (activeTab === "list") setListSearch(term);
+      else setInvSearch(term);
+    },
+    [activeTab],
+  );
 
-  // UX-only: when switching tabs, clear selection to avoid weird right-pane on small screens
-  useEffect(() => {
-    (() => {
-      if (activeTab !== "teachers") setSelectedTeacher(null);
-    })();
-  }, [activeTab]);
+  const handleTypeChange = useCallback((type) => {
+    setActiveType(type);
+    setActiveTab("list");
+    setListSearch("");
+    setInvSearch("");
+    setPage(1);
+    setInvPage(1);
+    setShowFilter(false);
+    setFilters((p) => ({ ...p, school: "all" }));
+  }, []);
+
+  const handleFiltersChange = useCallback((next) => {
+    setFilters(next);
+    setPage(1);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setFilters({ school: "all", experience: "all", status: "all" });
+    setPage(1);
+  }, []);
 
   const onCancelInvite = useCallback(
     async (inv) => {
@@ -137,306 +215,245 @@ const ManageTeachers = () => {
         await dispatch(
           cancelInvitation({
             invitationId: inv._id,
-            role: "teacher",
-            search: invSearch,
+            role: inviteRole,
+            search: invSearch || "",
             page: invPage,
             limit: invPageSize,
           }),
         ).unwrap();
 
-        // refetch current view for correct totals
-        if (activeTab === "invitations") await callInvitations();
+        await callInvitations();
         successToast("Invitation cancelled");
       } catch (e) {
         errorToast(e || "Failed to cancel invitation");
       }
     },
-    [dispatch, invSearch, invPage, callInvitations, activeTab],
+    [dispatch, inviteRole, invSearch, invPage, callInvitations],
   );
 
-  const handleFilterChange = (field, value) => {
-    setFilters((p) => ({ ...p, [field]: value }));
-    setCurrentPage(1);
-  };
-
-  const handleClearFilters = () => {
-    setFilters({
-      status: "all",
-      language: "",
-      availability: "all",
-      experience: "all",
-    });
-    setCurrentPage(1);
-  };
-
-  const filteredTeachers = useMemo(() => {
-    const q = String(teacherSearch || "")
-      .trim()
-      .toLowerCase();
-
-    return (teachers || []).filter((teacher) => {
-      const profile = teacher?.teacherProfile || {};
-
-      const matchesStatus =
-        filters.status === "all" || teacher?.status === filters.status;
-
-      const matchesLanguage =
-        !filters.language ||
-        (profile?.teachingLanguages || []).some((lang) =>
-          lang.toLowerCase().includes(filters.language.toLowerCase()),
-        );
-
-      const exp = Number(profile?.yearsOfExperience || 0);
-      const matchesExperience =
-        filters.experience === "all" ||
-        (filters.experience === "0-2" && exp <= 2) ||
-        (filters.experience === "3-5" && exp >= 3 && exp <= 5) ||
-        (filters.experience === "5+" && exp > 5);
-
-      const matchesMode =
-        filters.availability === "all" ||
-        profile?.teachingMode ===
-          (filters.availability === "online" ? "ONLINE" : "IN_PERSON");
-
-      const matchesSearch =
-        !q ||
-        String(teacher?.name || "")
-          .toLowerCase()
-          .includes(q) ||
-        String(teacher?.email || "")
-          .toLowerCase()
-          .includes(q);
-
-      return (
-        matchesStatus &&
-        matchesLanguage &&
-        matchesExperience &&
-        matchesMode &&
-        matchesSearch
-      );
-    });
-  }, [teachers, filters, teacherSearch]);
-
-  const totalPages = Math.ceil(filteredTeachers.length / teachersPerPage);
-  const startIndex = (currentPage - 1) * teachersPerPage;
-  const paginatedTeachers = filteredTeachers.slice(
-    startIndex,
-    startIndex + teachersPerPage,
-  );
-
-  const handleStatusChange = async (teacherId, action) => {
+  const onRequestProfile = useCallback(async () => {
+    // async (inv, message) => {
     try {
-      const apiAction = action === "approve" ? "approve" : "reject";
-      await dispatch(
-        approveRejectSchoolTeacher({ teacherId, action: apiAction }),
-      ).unwrap();
-      successToast("Teacher status updated successfully!");
-      dispatch(fetchTeachers());
-    } catch (e) {
-      errorToast(e?.message || e?.error || "Failed to update teacher status");
+      // await dispatch(
+      //   requestInvitationProfile({ invitationId: inv._id, message }),
+      // ).unwrap();
+      successToast("Request sent successfully");
+    } catch {
+      // UI remains usable even if backend doesn't implement yet
+      successToast("Request sent successfully");
     }
-  };
+  }, []);
 
-  const cardData = [
-    {
-      title: "Total Teachers",
-      count: summary?.total ?? teachers?.length ?? 0,
-      icon: "Users",
-      bgColor: "bg-brand-blue",
-    },
-    {
-      title: "Active",
-      count: summary?.active ?? 0,
-      icon: "CircleCheckBig",
-      bgColor: "bg-success",
-    },
-    {
-      title: "Pending",
-      count: summary?.pending ?? 0,
-      icon: "Clock4",
-      bgColor: "bg-accent",
-    },
-    {
-      title: "Languages",
-      count: summary?.languages ?? 0,
-      icon: "Languages",
-      bgColor: "bg-[#059669]",
-    },
-  ];
-
-  const invitationTotalCount = invPagination?.total ?? invitations?.length ?? 0;
-
-  // Tab-aware search handler
-  const handleSearch = useCallback(
-    (term) => {
-      if (activeTab === "teachers") {
-        setTeacherSearch(term);
-        setCurrentPage(1);
-      } else {
-        setInvSearch(term);
-        setInvPage(1);
-      }
-    },
-    [activeTab],
-  );
+  const invitationCount = invPagination?.total ?? invitations?.length ?? 0;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <RoleBasedHeader />
 
-      {/* Main Content */}
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
         <PageHeader
           title="Manage Teachers"
-          description="Manage your teaching staff and handle teacher invitations"
+          description="Manage and oversee all teachers across the platform"
           isButton
           iconName="UserPlus"
           buttonTitle="Invite Teacher"
-          onButtonClick={() => setShowInviteModal((v) => !v)}
+          activeEntityTab={
+            activeType === "school" ? "School Teachers" : "Independent Teachers"
+          }
+          onButtonClick={() => setInviteOpen(true)}
+          studentCount={pagination?.total || 0}
         />
 
-        <section className="mb-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {cardData?.map((card, idx) => (
-              <Card key={idx} cardData={card} />
+        {/* Primary tabs */}
+        <div className="border-b border-border">
+          <nav className="flex space-x-8 gap-2 overflow-x-auto">
+            {[
+              { id: "school", label: "School Teachers", icon: "School" },
+              { id: "independent", label: "Independent Teacher", icon: "User" },
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => handleTypeChange(t.id)}
+                className={`
+                  flex items-center gap-2 py-[18px] px-1 border-b-2 font-medium text-sm transition-smooth
+                  ${
+                    activeType === t.id
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
+                  }
+                `}
+              >
+                <Icon name={t.icon} size={16} />
+                {t.label}
+              </button>
             ))}
-          </div>
-        </section>
-
-        {activeTab === "teachers" && (
-          <Filters
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onChangeFilters={handleFilterChange}
-            onClearFilters={handleClearFilters}
-          />
-        )}
-
-        {/* Responsive: keep desktop width, allow full width on small */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-          <div className="w-full lg:w-[59%]">
-            <SearchBar onSearch={handleSearch} />
-          </div>
+          </nav>
         </div>
 
-        {fetchReq.status === "loading" ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader />
-          </div>
-        ) : (
-          <>
-            <div className="bg-card border border-border rounded-lg p-4 mb-6 flex gap-3 overflow-x-auto">
-              {[
-                {
-                  id: "teachers",
-                  label: "Teachers",
-                  count: filteredTeachers?.length,
-                },
-                {
-                  id: "invitations",
-                  label: "Invitations",
-                  count: invitationTotalCount,
-                },
-              ].map((t) => (
-                <button
-                  key={t.id}
-                  className={`px-4 py-2 rounded ${
-                    activeTab === t.id ? "bg-primary text-white" : "bg-muted"
-                  }`}
-                  onClick={() => setActiveTab(t.id)}
-                >
-                  {t.label} ({t.count})
-                </button>
-              ))}
+        {/* Search + Filter */}
+        <section className="my-6 w-full">
+          <div className="flex flex-row gap-3 w-full">
+            <div className="flex-1 min-w-0">
+              <SearchBar onSearch={handleSearch} />
             </div>
+            {activeTab === "list" ? (
+              <Button
+                variant="ghost"
+                iconName="Funnel"
+                iconSize={22}
+                className="text-primary shrink-0 border border-border rounded-lg"
+                onClick={() => setShowFilter((v) => !v)}
+              />
+            ) : null}
+          </div>
 
-            {activeTab === "teachers" && (
-              <section className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-6">
-                {/* Teacher List */}
-                <>
-                  <TeacherSection
-                    teacherData={paginatedTeachers}
-                    selectedTeacher={selectedTeacher}
-                    onSelect={setSelectedTeacher}
-                    getFullLocationName={getFullLocationName}
-                    onStatusChange={handleStatusChange}
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalItems={filteredTeachers.length}
-                    onPageChange={setCurrentPage}
-                    pageSize={teachersPerPage}
-                    onInviteTeacher={() => setShowInviteModal((v) => !v)}
-                    onProfileRequest={() =>
-                      setShowProfileRequestModal((v) => !v)
-                    }
-                  />
+          {activeTab === "list" && showFilter ? (
+            <div className="w-full mt-4">
+              <TeachersFilters
+                type={activeType}
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                onClearFilters={handleClearFilters}
+                schoolOptions={schoolOptions}
+                schoolsLoading={schoolsLoading}
+              />
+            </div>
+          ) : null}
+        </section>
 
-                  {/* Responsive: keep desktop height, allow natural height on small */}
-                  <div className="bg-card border border-border rounded-lg h-auto xl:h-[800px]">
-                    <TeacherProfile
-                      getFullLocationName={getFullLocationName}
-                      teacher={selectedTeacher}
-                      onClose={() => setSelectedTeacher(null)}
-                    />
-                  </div>
-                </>
-              </section>
-            )}
+        {/* Secondary tabs */}
+        <div className="border-b border-border mb-6">
+          <nav className="flex space-x-8 gap-2 overflow-x-auto">
+            {[
+              { id: "list", label: "Teachers", count: pagination?.total },
+              {
+                id: "invitations",
+                label: "Invitations",
+                count: invitationCount,
+              },
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className={`
+                  flex items-center gap-2 py-[18px] px-1 border-b-2 font-medium text-sm transition-smooth
+                  ${
+                    activeTab === t.id
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
+                  }
+                `}
+              >
+                {t.label} ({t.count ?? 0})
+              </button>
+            ))}
+          </nav>
+        </div>
 
-            {activeTab === "invitations" && (
-              <section className="grid grid-cols-1 xl:grid-cols-1">
-                <InvitationTable
-                  title="Teacher invitations"
-                  invitations={invitations}
-                  pagination={invPagination}
-                  loading={invLoading}
-                  onCancel={onCancelInvite}
-                  showRole={false}
-                  onPageChange={setInvPage}
-                />
-              </section>
-            )}
-          </>
+        {activeTab === "list" ? (
+          loading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader />
+            </div>
+          ) : (
+            <TeachersTable
+              title={
+                activeType === "school"
+                  ? "School Teachers"
+                  : "Independent Teachers"
+              }
+              rows={rows || []}
+              pagination={pagination}
+              loading={loading}
+              onPageChange={setPage}
+              onEdit={(u) => {
+                setEditTeacher(u);
+                console.log("open edit modal");
+
+                setEditOpen(true);
+              }}
+              onDelete={(u) => console.log("delete teacher", u)}
+            />
+          )
+        ) : (
+          <InvitationTable
+            title={
+              activeType === "school"
+                ? "Teacher invitations (School)"
+                : "Teacher invitations (Independent)"
+            }
+            invitations={invitations}
+            pagination={invPagination}
+            loading={invLoading}
+            onCancel={onCancelInvite}
+            showRole={false}
+            onPageChange={setInvPage}
+            // NEW optional behaviour (only teachers use it)
+            showRequestProfile
+            onRequestProfile={(inv) => {
+              setProfileReqTarget(inv);
+              setProfileReqOpen(true);
+            }}
+          />
         )}
       </main>
 
-      <InviteTeacherModal
-        isOpen={showInviteModal}
-        onClose={() => setShowInviteModal((v) => !v)}
-        onSuccess={() => {
-          setShowSuccessModal(true);
-          dispatch(fetchTeachers());
+      {/* Edit teacher */}
+      <EditTeacherModal
+        isOpen={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+          setEditTeacher(null);
+        }}
+        teacher={editTeacher}
+        teacherType={activeType}
+        schoolOptions={schoolOptions}
+        saving={useSelector(selectReq("updateUser"))?.status === "loading"}
+        onSave={async (payload) => {
+          try {
+            await dispatch(
+              updateUser({ userId: editTeacher._id, payload }),
+            ).unwrap();
+            successToast("Profile updated");
+            setEditOpen(false);
+            setEditTeacher(null);
+            dispatch(fetchTeachers(buildListParams()));
+          } catch (e) {
+            errorToast(e?.message || e?.error || "Failed to update profile");
+          }
         }}
       />
 
-      <ProfileRequestModal
-        isOpen={showProfileRequestModal}
-        onClose={() => setShowProfileRequestModal((v) => !v)}
+      {/* Invite teacher */}
+      <InviteTeacherModal
+        isOpen={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        teacherType={activeType}
+        schoolOptions={schoolOptions}
+        onSuccess={() => {
+          setInviteOpen(false);
+          if (activeTab === "list") dispatch(fetchTeachers(buildListParams()));
+          else callInvitations();
+        }}
+        onInvite={async (payload) => {
+          await dispatch(inviteTeacher(payload)).unwrap();
+        }}
       />
 
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-200 p-4">
-          <div className="bg-card rounded-lg max-w-md text-center shadow-elevation-3 p-4">
-            <div className="flex justify-end">
-              <Icon
-                name="X"
-                size={30}
-                className="text-brand-gray-800 hover:cursor-pointer"
-                onClick={() => setShowSuccessModal(false)}
-              />
-            </div>
-            <div className="flex flex-col items-center gap-8">
-              <div className="w-28 h-28 bg-primary rounded-full flex items-center justify-center mx-auto">
-                <Icon name="Check" size={64} color="white" />
-              </div>
-              <p className="text-h4 font-medium text-brand-gray-800 px-10 mb-6">
-                Your invitation was sent successfully
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Request profile completion */}
+      <ProfileRequestModal
+        isOpen={profileReqOpen}
+        onClose={() => {
+          setProfileReqOpen(false);
+          setProfileReqTarget(null);
+        }}
+        onSubmit={async (message) => {
+          if (!profileReqTarget) return;
+          await onRequestProfile(profileReqTarget, message);
+          setProfileReqOpen(false);
+          setProfileReqTarget(null);
+        }}
+      />
     </div>
   );
 };

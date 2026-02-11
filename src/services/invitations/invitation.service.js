@@ -13,7 +13,7 @@ export const invitationService = {
   getTeachers: async () => {
     try {
       const { data } = await api.get(`/school/teachers`);
-      return data?.data || data;
+      return data;
     } catch (error) {
       console.error("Failed to fetch teachers:", error);
       throw error.response?.data || { error: error.message };
@@ -24,15 +24,33 @@ export const invitationService = {
    * Invite a teacher to the school
    * @param {Object} inviteData - { email, schoolId, message }
    */
-  inviteTeacher: async ({ email, message }) => {
+  inviteTeacher: async ({ email, message, schoolId }) => {
     try {
       const { data } = await api.post("/school/teacher/invite", {
         email,
         message,
+        schoolId,
       });
       return data?.data || data;
     } catch (error) {
       console.error("Failed to invite teacher:", error);
+      throw error.response?.data || { error: error.message };
+    }
+  },
+
+  /**
+   * Admin: send a reminder/request to complete profile for a given invitation.
+   * Backend should implement this endpoint.
+   */
+  requestInvitationProfile: async (invitationId, payload = {}) => {
+    try {
+      const { data } = await api.post(
+        `/school/invitations/${invitationId}/request-profile`,
+        payload,
+      );
+      return data?.data?.data || data?.data || data;
+    } catch (error) {
+      console.error("Failed to request invitation profile:", error);
       throw error.response?.data || { error: error.message };
     }
   },
@@ -57,7 +75,7 @@ export const invitationService = {
   getStudents: async (params = {}) => {
     try {
       const { data } = await api.get(`/school/students`, { params });
-      return data?.data?.data || data?.data || data;
+      return data;
     } catch (error) {
       console.error("Failed to fetch students:", error);
       throw error.response?.data || { error: error.message };
@@ -131,6 +149,7 @@ export const invitationService = {
 
   getInvitations: async ({
     role,
+    teacherType,
     status,
     search,
     page = 1,
@@ -139,6 +158,7 @@ export const invitationService = {
     try {
       const params = new URLSearchParams();
       if (role) params.set("role", role);
+      if (teacherType) params.set("teacherType", teacherType);
       if (status) params.set("status", status);
       if (search) params.set("search", search);
       params.set("page", String(page));
