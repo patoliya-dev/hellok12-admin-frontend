@@ -165,6 +165,20 @@ const ManageStudents = () => {
     );
   }, [dispatch, activeEntityTab, activeTab, buildListParams]);
 
+  useEffect(() => {
+    (() => {
+      if (!(activeEntityTab === "students" && activeTab === "list")) {
+        setShowFilter(false);
+        setFilters({
+          school: "all",
+          language: "",
+          ageRange: "",
+          status: "all",
+        });
+      }
+    })();
+  }, [activeEntityTab, activeTab]);
+
   // Invitations: separated by entity role
   const inviteRole = activeEntityTab === "students" ? "student" : "parent";
 
@@ -329,29 +343,32 @@ const ManageStudents = () => {
             <div className="flex-1 min-w-0">
               <SearchBar onSearch={handleSearch} />
             </div>
-
-            <Button
-              variant="ghost"
-              iconName="Funnel"
-              iconSize={22}
-              className="text-primary shrink-0 border border-border rounded-lg"
-              onClick={() => setShowFilter((v) => !v)}
-            />
+            {activeEntityTab === "students" && activeTab === "list" && (
+              <Button
+                variant="ghost"
+                iconName="Funnel"
+                iconSize={22}
+                className="text-primary shrink-0 border border-border rounded-lg"
+                onClick={() => setShowFilter((v) => !v)}
+              />
+            )}
           </div>
 
-          {showFilter && (
-            <div className="w-full mt-3">
-              <Filters
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-                onClearFilters={handleClearFilters}
-                schoolOptions={schoolOptions}
-                schoolsLoading={schoolsLoading}
-                // Hide age range for parents (UI + API)
-                showAgeRange={activeEntityTab === "students"}
-              />
-            </div>
-          )}
+          {activeEntityTab === "students" &&
+            activeTab === "list" &&
+            showFilter && (
+              <div className="w-full mt-3">
+                <Filters
+                  filters={filters}
+                  onFiltersChange={handleFiltersChange}
+                  onClearFilters={handleClearFilters}
+                  schoolOptions={schoolOptions}
+                  schoolsLoading={schoolsLoading}
+                  // Hide age range for parents (UI + API)
+                  showAgeRange={activeEntityTab === "students"}
+                />
+              </div>
+            )}
         </section>
 
         {/* LIST / INVITATIONS TABS */}
@@ -360,7 +377,7 @@ const ManageStudents = () => {
             {[
               {
                 id: "list",
-                label: activeTab === "students" ? "Students" : "Parents",
+                label: activeEntityTab === "students" ? "Students" : "Parents",
                 count: pagination?.total,
               },
               {
