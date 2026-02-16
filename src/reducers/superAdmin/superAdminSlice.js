@@ -12,6 +12,8 @@ import {
   inviteStudent,
   fetchSchools,
   fetchParents,
+  updateUser,
+  fetchSchoolDetails,
 } from "./superAdminThunks";
 
 const allThunks = [
@@ -20,6 +22,7 @@ const allThunks = [
   approveRejectSchoolTeacher,
   fetchStudents,
   inviteStudent,
+  updateUser,
 ];
 
 const initialState = {
@@ -35,6 +38,10 @@ const initialState = {
   // teachers: [],
   teachersPagination: null,
 
+  schoolDetails: null,
+  schoolSummary: null,
+  schoolDetailsReq: { status: "idle", error: null },
+
   requests: {
     fetchTeachers: { status: "idle", error: null },
     inviteTeacher: { status: "idle", error: null },
@@ -46,6 +53,8 @@ const initialState = {
     fetchParents: { status: "idle", error: null },
 
     updateUser: { status: "idle", error: null },
+
+    fetchSchoolDetails: { status: "idle", error: null },
   },
 };
 
@@ -101,6 +110,21 @@ const schoolSlice = createSlice({
       state.schoolsPagination = data?.pagination || state.schoolsPagination;
     });
 
+    // DETAILS
+    builder
+      .addCase(fetchSchoolDetails.pending, (state) => {
+        state.schoolDetailsReq.status = "loading";
+      })
+      .addCase(fetchSchoolDetails.fulfilled, (state, action) => {
+        const payload = action.payload || {};
+        state.schoolDetails = payload.school || null;
+        state.schoolSummary = payload.summary || null;
+      })
+      .addCase(fetchSchoolDetails.rejected, (state, action) => {
+        state.schoolDetailsReq.status = "failed";
+        state.schoolDetailsReq.error = action.payload;
+      });
+
     // Generic request matchers
     builder
       .addMatcher(isPending(...allThunks), (state, action) => {
@@ -138,6 +162,8 @@ export const { clearSchoolErrors } = schoolSlice.actions;
 export const selectTeachers = (s) => s.superAdmin.teachers;
 export const selectTeachersPagination = (s) => s.superAdmin.teachersPagination;
 
+export const selectSchoolsPagination = (s) => s.superAdmin.schoolsPagination;
+
 export const selectStudents = (s) => s.superAdmin?.students || [];
 export const selectStudentsPagination = (s) =>
   s.superAdmin?.studentsPagination || {};
@@ -152,5 +178,11 @@ export const selectReq = (key) => (s) =>
 export const selectSchools = (s) => s.superAdmin?.schools || [];
 export const selectSchoolsReq = (s) =>
   s.superAdmin?.requests?.fetchSchools || { status: "idle", error: null };
+
+export const selectSchoolDetails = (state) => state.superAdmin.schoolDetails;
+export const selectSchoolSummary = (state) => state.superAdmin.schoolSummary;
+
+export const selectSchoolDetailsReq = (state) =>
+  state.superAdmin.schoolDetailsReq;
 
 export default schoolSlice.reducer;

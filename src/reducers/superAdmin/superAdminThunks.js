@@ -123,3 +123,30 @@ export const updateUser = createAsyncThunk(
     }
   },
 );
+
+export const inviteSchool = createAsyncThunk(
+  "superAdmin/inviteSchool",
+  async ({ email, message }, { rejectWithValue }) => {
+    try {
+      const res = await superAdminService.inviteSchool({ email, message });
+      return res?.data || res;
+    } catch (e) {
+      return rejectWithValue(
+        e?.response?.data?.message || e?.message || "Invite failed",
+      );
+    }
+  },
+);
+
+export const fetchSchoolDetails = createAsyncThunk(
+  "superAdmin/fetchSchoolDetails",
+  async ({ schoolId }, { rejectWithValue }) => {
+    try {
+      return await superAdminService.getSchoolDetails(schoolId);
+    } catch (e) {
+      return rejectWithValue(
+        e?.message || e?.error || "Failed to fetch school details",
+      );
+    }
+  },
+);
