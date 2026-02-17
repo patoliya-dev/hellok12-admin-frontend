@@ -13,12 +13,12 @@ import SchoolDetails from "../pages/admin/schools/components/SchoolDetails";
 // import Earnings from "../pages/school/earnings";
 // import ProfileAccountSettings from "../pages/school/profile-settings";
 
-// import ManageCourses from "../pages/teacher/manage-courses";
-// import CreateCourse from "../pages/teacher/create-course";
-// import LessonsList from "../pages/teacher/lessons-list";
+import ManageCourses from "../pages/admin/manage-courses";
+import CreateCourse from "../pages/admin/create-course";
+import LessonsList from "../pages/admin/lessons-list";
 
-// import ProtectedRoute from "../components/ProtectedRoute";
-// import { canManageCourses } from "../utils/authz";
+import ProtectedRoute from "../components/ProtectedRoute";
+import { canManageCourses } from "../utils/authz";
 
 const SchoolRoutes = () => {
   return (
@@ -35,7 +35,7 @@ const SchoolRoutes = () => {
       <Route path="/profile-settings" element={<ProfileAccountSettings />} /> */}
 
       {/* Course Management: School allowed */}
-      {/* <Route
+      <Route
         element={
           <ProtectedRoute
             allow={canManageCourses}
@@ -43,13 +43,13 @@ const SchoolRoutes = () => {
           />
         }
       >
-        <Route path="/manage-courses" element={<ManageCourses />} />
+        <Route path="/courses" element={<ManageCourses />} />
         <Route path="/create-course" element={<CreateCourse />} />
-        <Route path="/edit-course/:courseId" element={<CreateCourse />} />
-        <Route path="/edit-lesson/:courseId" element={<CreateCourse />} />
+        <Route path="/view-course/:courseId" element={<CreateCourse />} />
+        <Route path="/view-lesson/:courseId" element={<CreateCourse />} />
         <Route path="/create-lesson/:courseId" element={<CreateCourse />} />
         <Route path="/lessons/:courseId" element={<LessonsList />} />
-      </Route> */}
+      </Route>
 
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />

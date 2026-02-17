@@ -171,7 +171,10 @@ const ManageSchools = () => {
         <section className="my-6 w-full">
           <div className="flex flex-row gap-3 w-full">
             <div className="flex-1 min-w-0">
-              <SearchBar onSearch={handleSearch} />
+              <SearchBar
+                onSearch={handleSearch}
+                placeholder={"Search schools name"}
+              />
             </div>
           </div>
         </section>

@@ -7,7 +7,7 @@
 export const getRolePath = (role, path) => {
   // Ensure path starts with /
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `/${role}${normalizedPath}`;
+  return `/${role === "super_admin" ? "admin" : role}${normalizedPath}`;
 };
 
 /**
@@ -16,5 +16,5 @@ export const getRolePath = (role, path) => {
  * @returns {string} - The base path (e.g., '/student' or '/parent')
  */
 export const getRoleBasePath = (role) => {
-  return `/${role}`;
+  return `/${role === "super_admin" ? "admin" : role}`;
 };
