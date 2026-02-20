@@ -68,7 +68,7 @@ const LoginForm = ({ onSubmit, isLoading }) => {
           <Input
             label="Email Address"
             type="email"
-            placeholder="Enter your email"
+            placeholder="Enter email"
             value={formData.email}
             onChange={(e) => handleInputChange("email", e.target.value)}
             error={fieldErrors.email}
@@ -80,7 +80,7 @@ const LoginForm = ({ onSubmit, isLoading }) => {
             <Input
               label="Password"
               type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
+              placeholder="Enter password"
               value={formData.password}
               onChange={(e) => handleInputChange("password", e.target.value)}
               error={fieldErrors.password}
@@ -100,7 +100,7 @@ const LoginForm = ({ onSubmit, isLoading }) => {
 
         <div className="flex items-center justify-between">
           <Checkbox
-            label="Remember me"
+            label="Keep me signed in"
             checked={formData.rememberMe}
             onChange={(e) => handleInputChange("rememberMe", e.target.checked)}
             disabled={isLoading}
@@ -110,7 +110,7 @@ const LoginForm = ({ onSubmit, isLoading }) => {
             href="/password-reset"
             className="text-sm text-primary hover:text-primary/80 transition-smooth"
           >
-            Forgot password?
+            Reset password?
           </a>
         </div>
 

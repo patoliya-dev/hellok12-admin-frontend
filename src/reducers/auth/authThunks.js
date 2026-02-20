@@ -6,7 +6,7 @@ export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (credentials, { rejectWithValue }) => {
     try {
-      const { data } = await api.post("/auth/login", credentials, {
+      const { data } = await api.post("/auth/admin/login", credentials, {
         skipRefresh: true,
       });
 
@@ -18,9 +18,11 @@ export const loginUser = createAsyncThunk(
         };
       }
 
-      return data; // expected { accessToken, user }
+      return rejectWithValue(data?.message || "Login failed");
     } catch (err) {
-      return rejectWithValue(err.response?.data || err.message);
+      return rejectWithValue(
+        err.response?.data?.message || err.response?.data || err.message,
+      );
     }
   },
 );
