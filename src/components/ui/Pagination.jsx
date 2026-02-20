@@ -12,45 +12,57 @@ const Pagination = ({
   pageSize = PAGE_SIZE,
   listType = "items",
 }) => {
-  const startItem = (currentPage - 1) * pageSize + 1;
-  const endItem = Math.min(currentPage * pageSize, totalItems);
+  const safeTotalPages = Math.max(1, Number(totalPages) || 1);
+  const safeCurrentPage = Math.min(
+    Math.max(1, Number(currentPage) || 1),
+    safeTotalPages,
+  );
+  const safePageSize = Math.max(1, Number(pageSize) || PAGE_SIZE);
+  const safeTotalItems = Math.max(0, Number(totalItems) || 0);
+
+  const startItem =
+    safeTotalItems === 0 ? 0 : (safeCurrentPage - 1) * safePageSize + 1;
+  const endItem =
+    safeTotalItems === 0
+      ? 0
+      : Math.min(safeCurrentPage * safePageSize, safeTotalItems);
 
   const getVisiblePages = () => {
     const pages = [];
     const maxVisiblePages = 5;
 
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
+    if (safeTotalPages <= maxVisiblePages) {
+      for (let i = 1; i <= safeTotalPages; i++) {
         pages?.push(i);
       }
     } else {
-      if (currentPage <= 3) {
+      if (safeCurrentPage <= 3) {
         for (let i = 1; i <= 4; i++) {
           pages?.push(i);
         }
         pages?.push("...");
-        pages?.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
+        pages?.push(safeTotalPages);
+      } else if (safeCurrentPage >= safeTotalPages - 2) {
         pages?.push(1);
         pages?.push("...");
-        for (let i = totalPages - 3; i <= totalPages; i++) {
+        for (let i = safeTotalPages - 3; i <= safeTotalPages; i++) {
           pages?.push(i);
         }
       } else {
         pages?.push(1);
         pages?.push("...");
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+        for (let i = safeCurrentPage - 1; i <= safeCurrentPage + 1; i++) {
           pages?.push(i);
         }
         pages?.push("...");
-        pages?.push(totalPages);
+        pages?.push(safeTotalPages);
       }
     }
 
     return pages;
   };
 
-  if (totalPages === 0) return null;
+  if (safeTotalPages === 0) return null;
 
   return (
     <div
@@ -68,8 +80,8 @@ const Pagination = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
+          onClick={() => onPageChange(safeCurrentPage - 1)}
+          disabled={safeCurrentPage === 1}
           iconName="ChevronLeft"
           iconPosition="left"
         >
@@ -84,7 +96,7 @@ const Pagination = ({
                 <span className="px-3 py-2 text-muted-foreground">...</span>
               ) : (
                 <Button
-                  variant={currentPage === page ? "default" : "ghost"}
+                  variant={safeCurrentPage === page ? "default" : "ghost"}
                   size="sm"
                   onClick={() => onPageChange(page)}
                   className="min-w-[40px]"
@@ -98,15 +110,15 @@ const Pagination = ({
 
         {/* Mobile Page Info */}
         <div className="sm:hidden px-3 py-2 text-sm text-muted-foreground">
-          Page {currentPage} of {totalPages}
+          Page {safeCurrentPage} of {safeTotalPages}
         </div>
 
         {/* Next Button */}
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
+          onClick={() => onPageChange(safeCurrentPage + 1)}
+          disabled={safeCurrentPage === safeTotalPages}
           iconName="ChevronRight"
           iconPosition="right"
         >
