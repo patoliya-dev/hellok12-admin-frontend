@@ -202,14 +202,3 @@ export const selectInvitationsPagination = (
   const k = keyOf(role, search, page, limit);
   return state.invitations?.paginationByKey?.[k] || null;
 };
-
-export const selectInvitationsError = (
-  state,
-  role,
-  search,
-  page = 1,
-  limit = 10,
-) => {
-  const k = keyOf(role, search, page, limit);
-  return state.invitations?.errorByKey?.[k] || null;
-};

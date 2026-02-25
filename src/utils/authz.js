@@ -3,9 +3,6 @@ export const isAdmin = (u) => u?.role === "super_admin";
 export const isSchoolTeacher = (u) =>
   u?.role === "teacher" && Boolean(u?.schoolId);
 
-export const isIndependentTeacher = (u) =>
-  u?.role === "teacher" && !u?.schoolId;
-
 /**
  * Course management permission (single source of truth)
  * - Admin can manage
