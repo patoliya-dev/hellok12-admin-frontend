@@ -8,6 +8,7 @@ import {
 } from "./financialThunks";
 
 const initialState = {
+  // Summary is cached by period so tab switching does not trigger unnecessary reloads.
   summaryByPeriod: {
     weekly: null,
     monthly: null,
