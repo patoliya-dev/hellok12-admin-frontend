@@ -52,7 +52,7 @@ const UserRegistration = ({ currentStep, setCurrentStep, initialRoleData }) => {
         setCurrentStep(1);
       }
     })();
-  }, [initialRoleData]);
+  }, [initialRoleData, setCurrentStep]);
 
   const handleInputChange = (field, value, childId = null) => {
     if (field === "children" && childId) {
