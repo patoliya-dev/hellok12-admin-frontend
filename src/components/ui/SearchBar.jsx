@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Input from "./Input";
 import Icon from "./Icon";
 
-const SearchBar = ({ onSearch }) => {
+const SearchBar = ({ onSearch, placeholder = "Search" }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedTerm, setDebouncedTerm] = useState(searchTerm);
 
@@ -32,10 +32,10 @@ const SearchBar = ({ onSearch }) => {
 
       <Input
         type="text"
-        placeholder="Search"
+        placeholder={placeholder}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="pl-10 pr-10 h-12 border-muted-1 bg-white"
+        className="pl-10 pr-4 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring w-full"
       />
 
       {searchTerm && (

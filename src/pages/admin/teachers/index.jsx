@@ -294,14 +294,17 @@ const ManageTeachers = () => {
         <section className="my-6 w-full">
           <div className="flex flex-row gap-3 w-full">
             <div className="flex-1 min-w-0">
-              <SearchBar onSearch={handleSearch} />
+              <SearchBar
+                onSearch={handleSearch}
+                placeholder={"Search teachers name"}
+              />
             </div>
             {activeTab === "list" ? (
               <Button
                 variant="ghost"
                 iconName="Funnel"
                 iconSize={22}
-                className="text-primary shrink-0 border border-border rounded-lg"
+                className="text-primary"
                 onClick={() => setShowFilter((v) => !v)}
               />
             ) : null}

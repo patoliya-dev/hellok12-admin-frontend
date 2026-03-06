@@ -3,6 +3,7 @@ import Icon from "components/AppIcon";
 import Pagination from "components/ui/Pagination";
 import Button from "components/ui/Button";
 import Image from "components/AppImage";
+import { getLanguageName } from "../../../../utils/utils";
 
 const StatusBadge = ({ status }) => {
   const s = String(status || "").toUpperCase();
@@ -203,9 +204,9 @@ const UsersTable = ({
                       </td>
 
                       <td className="py-4 px-3 text-brand-gray-800">
-                        {u?.profile?.languages?.[0] ||
-                          u?.profile?.language ||
-                          "—"}
+                        {getLanguageName(
+                          u?.profile?.languages?.[0] || u?.profile?.language,
+                        ) || "—"}
                       </td>
 
                       <td className="py-4 px-3">
