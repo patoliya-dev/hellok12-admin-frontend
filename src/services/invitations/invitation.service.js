@@ -80,6 +80,21 @@ export const invitationService = {
     }
   },
   /**
+   * Invite a student to the hellok12
+   * @param {Object} inviteData - { email, schoolId, message }
+   */
+  inviteParent: async ({ email, message }) => {
+    try {
+      const { data } = await api.post("/school/parent/invite", {
+        email,
+        message,
+      });
+      return data?.data || data;
+    } catch (error) {
+      throw error.response?.data || { error: error.message };
+    }
+  },
+  /**
    * Get upcoming lessons for a school
    * @param {Object} params - { limit }
    */

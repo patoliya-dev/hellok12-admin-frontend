@@ -9,6 +9,7 @@ const PageHeader = ({
   buttonTitle,
   onButtonClick,
   studentCount,
+  activeEntityTab = "",
   ...props
 }) => {
   return (
@@ -28,7 +29,9 @@ const PageHeader = ({
               <div className="text-4xl font-bold text-foreground mb-1">
                 {studentCount}
               </div>
-              <div className="text-sm text-brand-gray-500">Total Students</div>
+              <div className="text-sm text-brand-gray-500">
+                Total {activeEntityTab}
+              </div>
             </div>
           )}
           {isButton && (
