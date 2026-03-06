@@ -36,4 +36,15 @@ export const superAdminService = {
       throw error.response?.data || { error: error.message };
     }
   },
+
+  inviteSchool: (payload) => api.post("/school/schools/invite", payload),
+
+  getSchoolDetails: async (schoolId) => {
+    try {
+      const { data } = await api.get(`/admin/schools/${schoolId}/details`);
+      return unwrap(data); // { school, summary }
+    } catch (error) {
+      throw error?.response?.data || { message: error.message };
+    }
+  },
 };
