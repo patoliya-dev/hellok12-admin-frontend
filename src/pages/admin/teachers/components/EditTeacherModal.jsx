@@ -1,20 +1,21 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+
 import Modal from "components/ui/Modal";
 import Button from "components/ui/Button";
 import Input from "components/ui/Input";
 import Select from "components/ui/Select";
-import { languageOptions } from "../../../../utils/utils";
 import Image from "components/AppImage";
 import Icon from "components/AppIcon";
 
-const genderOptions = [
-  { value: "", label: "Select gender..." },
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-  { value: "other", label: "Other" },
-];
+import { languageOptions } from "../../../../utils/utils";
 
 const toArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
+
+const isPositiveNumberOrBlank = (v) => {
+  if (v === "" || v === null || v === undefined) return true;
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0;
+};
 
 const findSchoolLabel = (schoolOptions, schoolId) => {
   if (!schoolId) return "";
@@ -24,38 +25,34 @@ const findSchoolLabel = (schoolOptions, schoolId) => {
   return found?.label || "";
 };
 
-const EditUserModal = ({
+const EditTeacherModal = ({
   isOpen,
   onClose,
-  entity = "students", // "students" | "parents"
-  user = null,
+  teacher = null,
   schoolOptions = [{ value: "all", label: "All Schools" }],
   onSave,
   saving = false,
 }) => {
-  const isStudent = entity === "students";
-
   const initial = useMemo(() => {
-    if (!user) return null;
+    if (!teacher) return null;
 
-    const profile = user.profile || {};
-    const schoolId = user.school || profile.school || ""; // in case
+    const profile = teacher.profile || {};
+    const schoolId = teacher.school || profile.school || "";
     const schoolName = findSchoolLabel(schoolOptions, schoolId);
 
     return {
-      name: user.name || "",
-      email: user.email || "",
-      phone: user.phone || profile.phone || "",
+      name: teacher.name || "",
+      email: teacher.email || "",
+      phone: teacher.phone || profile.phone || "",
       address: profile.address || "",
-      age: isStudent ? (profile.age ?? "") : "",
-      gender: isStudent ? (profile.gender ?? "") : "",
       languages: toArray(profile.languages),
-      // display-only (no edit)
+      experience: profile.experience ?? "",
       schoolId,
       schoolName,
-      profileImage: user?.profileImage?.url || "",
+      profileImage: teacher?.profileImage?.url || "",
+      isSchoolTeacher: Boolean(schoolId),
     };
-  }, [user, isStudent, schoolOptions]);
+  }, [teacher, schoolOptions]);
 
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
@@ -75,62 +72,43 @@ const EditUserModal = ({
   const validate = useCallback(() => {
     const next = {};
     if (!String(form?.name || "").trim()) next.name = "Name is required";
-
-    if (isStudent) {
-      const age = form?.age;
-      if (age !== "" && age !== null && age !== undefined) {
-        const n = Number(age);
-        if (!Number.isFinite(n) || n < 0)
-          next.age = "Age must be a valid number";
-      }
-    }
-
+    if (!isPositiveNumberOrBlank(form?.experience))
+      next.experience = "Experience must be a valid number";
     setErrors(next);
     return Object.keys(next).length === 0;
-  }, [form, isStudent]);
+  }, [form]);
 
   const handleSubmit = useCallback(
     async (e) => {
       e?.preventDefault();
       if (!validate()) return;
 
-      // IMPORTANT:
-      // - Do NOT include school in payload (school is read-only here)
       const payload = {
         name: String(form.name || "").trim(),
         phone: String(form.phone || "").trim(),
         profile: {
           address: String(form.address || "").trim(),
           languages: toArray(form.languages).filter(Boolean),
-          ...(isStudent
-            ? {
-                age: form.age === "" ? null : Number(form.age),
-                gender: form.gender || null,
-              }
-            : {}),
+          experience: form.experience === "" ? null : Number(form.experience),
         },
       };
 
       await onSave?.(payload);
     },
-    [form, onSave, validate, isStudent],
+    [form, onSave, validate],
   );
 
-  if (!isOpen || !user || !form) return null;
+  if (!isOpen || !teacher || !form) return null;
 
   return (
-    <Modal
-      title={isStudent ? "Student Profile" : "Parent Profile"}
-      onClose={onClose}
-      width="max-w-4xl w-full"
-    >
+    <Modal title="Teacher Profile" onClose={onClose} width="max-w-4xl w-full">
       <form onSubmit={handleSubmit} className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="md:col-span-2 flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
               Profile Photo
               <div className="mt-2 w-32 h-32 rounded-full overflow-hidden bg-muted border-2 border-border">
-                {form?.profileImage ? (
+                {form.profileImage ? (
                   <Image
                     src={form.profileImage}
                     alt="Profile preview"
@@ -147,15 +125,6 @@ const EditUserModal = ({
                 )}
               </div>
             </div>
-
-            {/* <button
-              type="button"
-              className="text-primary text-sm flex items-center gap-2"
-              disabled
-              title="Profile photo update not enabled yet"
-            >
-              ✎ Edit Profile
-            </button> */}
           </div>
 
           <Input
@@ -172,7 +141,7 @@ const EditUserModal = ({
           />
 
           <Input label="Email Address" value={form.email} disabled />
-          <Input label="Password" value={"**************"} disabled />
+          <Input label="Password" value="**************" disabled />
 
           <div className="md:col-span-2">
             <Input
@@ -182,56 +151,29 @@ const EditUserModal = ({
             />
           </div>
 
-          {isStudent ? (
-            <>
-              <Input
-                label="Age"
-                value={form.age}
-                onChange={(e) => setField("age", e.target.value)}
-                error={errors.age}
-              />
+          <Input
+            label="Years of Experience"
+            value={form.experience}
+            onChange={(e) => setField("experience", e.target.value)}
+            error={errors.experience}
+          />
 
-              <Select
-                label="Gender"
-                value={form.gender}
-                options={genderOptions}
-                onChange={(v) => setField("gender", v)}
-              />
+          <Select
+            label="Languages"
+            value={form.languages?.[0] ?? ""}
+            options={[
+              { value: "", label: "Select language..." },
+              ...languageOptions,
+            ]}
+            searchable
+            onChange={(v) => setField("languages", v ? [v] : [])}
+          />
 
-              <Select
-                label="Languages"
-                value={form.languages?.[0] ?? ""}
-                options={[
-                  { value: "", label: "Select language..." },
-                  ...languageOptions,
-                ]}
-                searchable
-                onChange={(v) => setField("languages", v ? [v] : [])}
-              />
-
-              {/* School name only (disabled input) */}
-              {form.schoolName && (
-                <div className="md:col-span-2">
-                  <Input
-                    label="School"
-                    value={form.schoolName || "—"}
-                    disabled
-                  />
-                </div>
-              )}
-            </>
-          ) : (
-            <Select
-              label="Languages"
-              value={form.languages?.[0] ?? ""}
-              options={[
-                { value: "", label: "Select language..." },
-                ...languageOptions,
-              ]}
-              searchable
-              onChange={(v) => setField("languages", v ? [v] : [])}
-            />
-          )}
+          {form.isSchoolTeacher && form.schoolName ? (
+            <div className="md:col-span-2">
+              <Input label="School" value={form.schoolName || "—"} disabled />
+            </div>
+          ) : null}
         </div>
 
         <div className="flex items-center justify-end gap-3 mt-10">
@@ -252,4 +194,4 @@ const EditUserModal = ({
   );
 };
 
-export default EditUserModal;
+export default EditTeacherModal;

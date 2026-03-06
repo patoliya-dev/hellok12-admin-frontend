@@ -1,13 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "../reducers/auth/authSlice";
 
-import schoolReducer from "../reducers/superAdmin/superAdminSlice";
+import superAdminReducer from "../reducers/superAdmin/superAdminSlice";
 import invitationReducer from "../reducers/invitations/invitationsSlice";
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
-    school: schoolReducer,
+    superAdmin: superAdminReducer,
     invitations: invitationReducer,
   },
 });
