@@ -25,7 +25,7 @@ const TrustSignals = () => {
       <div className="flex items-center justify-center space-x-2 text-xs text-muted-foreground">
         <div className="flex items-center space-x-1">
           <Icon name="Shield" size={14} />
-          <span>Secure & Encrypted</span>
+          <span>Secure Access</span>
         </div>
 
         <Icon name="Dot" size={20} />

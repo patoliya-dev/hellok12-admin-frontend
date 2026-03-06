@@ -10,7 +10,7 @@ const SocialLoginSection = ({ onGoogleLogin, onFacebookLogin, isLoading }) => {
         </div>
         <div className="relative flex justify-center text-sm">
           <span className="px-2 bg-surface text-muted-foreground">
-            Or continue with
+            Or continue with SSO
           </span>
         </div>
       </div>
