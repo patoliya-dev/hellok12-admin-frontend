@@ -1,4 +1,3 @@
-// src/services/dashboard/schoolDashboard.service.js
 import api from "../../utils/axiosInstance";
 
 const toApiError = (error, fallbackMessage) => {

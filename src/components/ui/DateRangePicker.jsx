@@ -4,10 +4,15 @@ import { DateRange } from "react-date-range";
 import { format } from "date-fns";
 import "react-date-range/dist/styles.css"; // main style
 import "react-date-range/dist/theme/default.css"; // theme css
-import { Calendar } from "lucide-react"; // icon library (or use any)
 import Icon from "components/AppIcon";
 
-const DateRangePicker = ({ onChange, onClear = false }) => {
+const DateRangePicker = ({
+  onChange,
+  onClear = false,
+  className = "",
+  buttonClassName = "",
+  textClassName = "",
+}) => {
   const [showPicker, setShowPicker] = useState(false);
   const [range, setRange] = useState([
     {
@@ -53,14 +58,17 @@ const DateRangePicker = ({ onChange, onClear = false }) => {
   }, [onClear]);
 
   return (
-    <div className="relative inline-block">
+    <div className={`relative inline-block ${className}`}>
       {/* Display input box */}
       <button
+        type="button"
         onClick={handleTogglePicker}
-        className="flex items-center gap-2 border border-border bg-input rounded-md px-3 py-2"
+        className={`w-full h-10 flex items-center gap-2 border border-border bg-background rounded-md px-4 transition-colors hover:bg-muted/30 ${buttonClassName}`}
       >
-        <Icon name={"Calendar"} size={16} />
-        <span className="font-medium text-sm text-brand-gray-800">
+        <Icon name="Calendar" size={16} className="text-muted-foreground" />
+        <span
+          className={`font-medium text-sm text-foreground ${textClassName}`}
+        >
           {format(range[0].startDate, "MMM dd, yyyy")} -{" "}
           {format(range[0].endDate, "MMM dd, yyyy")}
         </span>
