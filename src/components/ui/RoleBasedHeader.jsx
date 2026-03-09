@@ -16,7 +16,17 @@ import { selectAuthUser } from "../../reducers/auth/authSelectors";
 import { logout } from "../../reducers/auth/authSlice";
 import Image from "../../components/AppImage";
 import NotificationModal from "./NotificationModal";
-import { getNotificationByRole } from "./data";
+import {
+  fetchNotifications,
+  fetchNotificationUnreadCount,
+  markNotificationRead,
+  markAllNotificationsRead,
+  selectNotifications,
+  selectNotificationUnreadCount,
+  selectNotificationsLoading,
+} from "../../reducers/notifications/notificationsSlice";
+import useNotificationPolling from "../../hooks/useNotificationPolling";
+import { resolveNotificationDeepLink } from "../../utils/notificationRoutes";
 
 const arraysEqual = (a = [], b = []) =>
   a.length === b.length && a.every((v, i) => v === b[i]);
@@ -66,16 +76,9 @@ const RoleBasedHeader = () => {
   const notificationRef = useRef(null);
   const moreRef = useRef(null);
 
-  // Notifications derived (kept same)
-  const notifications = useMemo(
-    () => getNotificationByRole(userRole),
-    [userRole],
-  );
-
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => n.unread).length,
-    [notifications],
-  );
+  const notifications = useSelector(selectNotifications);
+  const unreadCount = useSelector(selectNotificationUnreadCount);
+  const notificationsLoading = useSelector(selectNotificationsLoading);
 
   // Close overlays on route change
   useEffect(() => {
@@ -99,6 +102,16 @@ const RoleBasedHeader = () => {
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  useNotificationPolling(Boolean(authUser?.id || authUser?._id));
+
+  useEffect(() => {
+    if (!authUser) return;
+    if (!isNotificationOpen) return;
+
+    dispatch(fetchNotifications({ page: 1, limit: 10 }));
+    dispatch(fetchNotificationUnreadCount());
+  }, [authUser, isNotificationOpen, dispatch]);
 
   const getNavigationItems = useCallback(() => {
     const adminNav = [
@@ -182,8 +195,19 @@ const RoleBasedHeader = () => {
     setIsMoreOpen(false);
   }, [dispatch, navigate]);
 
-  const handleNotificationClick = (notificationId) => {
-    console.log("Notification clicked:", notificationId);
+  const handleNotificationClick = async (notification) => {
+    if (!notification) return;
+    if (!notification.isRead) {
+      await dispatch(markNotificationRead(notification._id));
+    }
+    const deepLink = resolveNotificationDeepLink(notification);
+    setIsNotificationOpen(false);
+    navigate(deepLink || "/admin/notifications");
+  };
+
+  const handleViewAllNotifications = () => {
+    setIsNotificationOpen(false);
+    navigate("/admin/notifications");
   };
 
   const toggleNotifications = () => {
@@ -499,7 +523,11 @@ const RoleBasedHeader = () => {
                   {isNotificationOpen && (
                     <NotificationModal
                       notifications={notifications}
+                      loading={notificationsLoading}
+                      unreadCount={unreadCount}
                       handleNotificationClick={handleNotificationClick}
+                      handleMarkAllRead={() => dispatch(markAllNotificationsRead({}))}
+                      handleViewAll={handleViewAllNotifications}
                     />
                   )}
                 </div>

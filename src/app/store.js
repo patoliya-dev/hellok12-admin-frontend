@@ -8,6 +8,7 @@ import courseReducers from "../reducers/courses/courseSlice";
 import pageLoaderReducer from "../reducers/ui/pageLoaderSlice";
 import scheduleReducer from "../reducers/schedule/scheduleSlice";
 import financialReducer from "../reducers/financial/financialSlice";
+import notificationsReducer from "../reducers/notifications/notificationsSlice";
 
 const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ const store = configureStore({
     pageLoader: pageLoaderReducer,
     schedule: scheduleReducer,
     financial: financialReducer,
+    notifications: notificationsReducer,
   },
 });
 

@@ -11,6 +11,7 @@ import AdminFinancial from "../pages/admin/financial";
 import ManageCourses from "../pages/admin/manage-courses";
 import CreateCourse from "../pages/admin/create-course";
 import LessonsList from "../pages/admin/lessons-list";
+import NotificationsPage from "../pages/shared/notifications";
 
 import ProtectedRoute from "../components/ProtectedRoute";
 import { canManageCourses } from "../utils/authz";
@@ -24,6 +25,7 @@ const SchoolRoutes = () => {
       <Route path="/schools" element={<Schools />} />
       <Route path="/schools/:schoolId" element={<SchoolDetails />} />
       <Route path="/earning" element={<AdminFinancial />} />
+      <Route path="/notifications" element={<NotificationsPage />} />
 
       {/* Course Management: Admin allowed */}
       <Route
