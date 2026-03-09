@@ -22,35 +22,9 @@ export const errorToast = (message) => {
   });
 };
 
-export const infoToast = (message) => {
-  toast.info(message, {
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    progress: undefined,
-  });
-};
-
 export const capitalize = (s) => {
   if (typeof s !== "string") return "";
   return s.charAt(0).toUpperCase() + s.slice(1);
-};
-
-export function titleCase(label) {
-  return (
-    label?.charAt(0)?.toUpperCase() +
-    label
-      ?.slice(1)
-      ?.split(/(?=[A-Z])/)
-      ?.join("")
-  );
-}
-
-export const copyToClipboard = (text) => {
-  if (!text) return;
-  navigator.clipboard.writeText(text);
-  successToast("Copied to clipboard!");
 };
 
 export const getAllCountries = () => {
@@ -130,34 +104,6 @@ export function getIn(obj, path, fallback = undefined) {
   return cur === undefined ? fallback : cur;
 }
 
-export function to12hTime(input) {
-  if (!input) return "";
-  let s = String(input).trim().toUpperCase().replace(/\s+/g, " ");
-  const ampmGiven = s.includes("AM") || s.includes("PM");
-  const hhmm = s.replace(/AM|PM/g, "").trim();
-  let [hStr, mStr = "00"] = hhmm.split(":");
-  let h = parseInt(hStr, 10);
-  let m = parseInt(mStr, 10);
-  if (isNaN(h) || h < 0 || h > 23) h = 0;
-  if (isNaN(m) || m < 0 || m > 59) m = 0;
-
-  if (!ampmGiven) {
-    const suffix = h >= 12 ? "PM" : "AM";
-    const twelve = h % 12 || 12;
-    return `${String(twelve).padStart(2, "0")}:${String(m).padStart(
-      2,
-      "0",
-    )} ${suffix}`;
-  } else {
-    const isPM = s.includes("PM");
-    if (h === 0) h = 12;
-    if (h > 12) h = h % 12;
-    const hh = String(h || 12).padStart(2, "0");
-    const mm = String(m).padStart(2, "0");
-    return `${hh}:${mm} ${isPM ? "PM" : "AM"}`;
-  }
-}
-
 export const safeParseArray = (s) => {
   try {
     const v = JSON.parse(s);
@@ -172,80 +118,3 @@ export const toBracketPath = (p) =>
   String(p || "")
     .replace(/^body\./, "")
     .replace(/\.([0-9]+)(?=\.|$)/g, "[$1]");
-
-export const buildQueryParams = (filters, pagination) => {
-  const params = new URLSearchParams();
-
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value === "" || value === undefined || value === null) return;
-
-    if (Array.isArray(value)) {
-      if (value.length === 0) return;
-      params.append(key, JSON.stringify(value));
-    } else if (typeof value === "boolean") {
-      params.append(key, String(value));
-    } else {
-      params.append(key, value);
-    }
-  });
-
-  params.append("limit", pagination.limit);
-  params.append("offset", pagination.offset);
-
-  return params.toString();
-};
-
-export const getTimeAgo = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInDays = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  if (diffInDays === 0) return "Today";
-  if (diffInDays === 1) return "1 day ago";
-  if (diffInDays < 7) return `${diffInDays} days ago`;
-  if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
-  if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`;
-  return `${Math.floor(diffInDays / 365)} years ago`;
-};
-
-/**
- * Safe one-line address formatter.
- * Works with:
- * - your manual address object { line1, line2, city, state, postalCode, country }
- * - partial objects
- * - string address (fallback)
- */
-export function formatAddressOneLine(address) {
-  if (!address) return "";
-
-  // If someone passes string (old flow)
-  if (typeof address === "string") {
-    return address.trim();
-  }
-
-  const parts = [];
-
-  const line1 = String(address.line1 || "").trim();
-  const line2 = String(address.line2 || "").trim();
-
-  const city = String(address.city || "").trim();
-  const state = String(address.state || "").trim();
-  const postalCode = String(address.postalCode || "").trim();
-  const country = String(address.country || "").trim();
-
-  // Prefer common human-readable ordering
-  if (line1) parts.push(line1);
-  if (line2) parts.push(line2);
-
-  const cityStateZip = [city, state, postalCode]
-    .filter(Boolean)
-    .join(", ")
-    .replace(/,\s*,/g, ",");
-  if (cityStateZip) parts.push(cityStateZip);
-
-  if (country) parts.push(country);
-
-  return parts.filter(Boolean).join(", ");
-}

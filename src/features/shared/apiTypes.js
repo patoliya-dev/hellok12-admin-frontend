@@ -1,6 +1,4 @@
 export const isOk = (res) => res?.success === true;
-export const dataOf = (res) => (isOk(res) ? res.data : undefined);
-export const emptyPage = () => ({ page: 1, limit: 10, total: 0, pages: 0 });
 
 export const normalizeErr = (err) => {
   const http = err?.response?.status ?? 0;

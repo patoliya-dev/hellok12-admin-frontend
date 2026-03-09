@@ -182,7 +182,4 @@ export const selectSchoolsReq = (s) =>
 export const selectSchoolDetails = (state) => state.superAdmin.schoolDetails;
 export const selectSchoolSummary = (state) => state.superAdmin.schoolSummary;
 
-export const selectSchoolDetailsReq = (state) =>
-  state.superAdmin.schoolDetailsReq;
-
 export default schoolSlice.reducer;
