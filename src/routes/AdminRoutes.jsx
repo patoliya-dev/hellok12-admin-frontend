@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Navigate, Routes, Route } from "react-router-dom";
 
 import NotFound from "../pages/NotFound";
 import SchoolDashboard from "../pages/admin/dashboard";
@@ -7,6 +7,8 @@ import Teachers from "../pages/admin/teachers";
 import Schools from "../pages/admin/schools";
 import SchoolDetails from "../pages/admin/schools/components/SchoolDetails";
 import AdminFinancial from "../pages/admin/financial";
+import AdminCreatePayout from "../pages/admin/payouts/create";
+import AdminPayoutDetail from "../pages/admin/payouts/detail";
 
 import ManageCourses from "../pages/admin/manage-courses";
 import CreateCourse from "../pages/admin/create-course";
@@ -25,6 +27,12 @@ const SchoolRoutes = () => {
       <Route path="/schools" element={<Schools />} />
       <Route path="/schools/:schoolId" element={<SchoolDetails />} />
       <Route path="/earning" element={<AdminFinancial />} />
+      <Route
+        path="/payouts"
+        element={<Navigate to="/admin/earning?tab=payout" replace />}
+      />
+      <Route path="/payouts/new" element={<AdminCreatePayout />} />
+      <Route path="/payouts/:payoutId" element={<AdminPayoutDetail />} />
       <Route path="/notifications" element={<NotificationsPage />} />
 
       {/* Course Management: Admin allowed */}

@@ -7,6 +7,12 @@ import {
   fetchFinancialCommission,
 } from "../../services/financial/financial.service";
 
+const centsToDollars = (value) => Number(value || 0) / 100;
+
+/**
+ * Normalizes heterogeneous API list payloads into one reducer contract.
+ * Backend endpoints currently return slightly different list keys (`rows`, `items`, `records`, etc.).
+ */
 const normalizeTablePayload = (payload) => {
   if (Array.isArray(payload)) {
     return { rows: payload, pagination: null };
@@ -75,7 +81,31 @@ export const getPayouts = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       const res = await fetchFinancialPayouts(params);
-      return normalizeTablePayload(res.data?.data);
+      const normalized = normalizeTablePayload(res.data?.data);
+      const rows = (normalized?.rows || []).map((row) => ({
+        ...row,
+        instructorName:
+          row?.instructorName ||
+          row?.payeeName ||
+          row?.payeeId?.name ||
+          row?.payeeId?.email ||
+          "—",
+        // Payout table "Net Amount" always represents payout cash-out amount in dollars.
+        amount:
+          row?.netAmount !== undefined
+            ? centsToDollars(row?.netAmount)
+            : row?.amount !== undefined
+              ? centsToDollars(row?.amount)
+              : 0,
+        transactionId:
+          row?.transactionId ||
+          row?.paymentRef ||
+          (row?._id
+            ? `PAYOUT-${String(row._id).slice(-6).toUpperCase()}`
+            : "—"),
+        downloadUrl: row?.downloadUrl || null,
+      }));
+      return { ...normalized, rows };
     } catch (e) {
       return rejectWithValue(e?.response?.data || e?.message);
     }
